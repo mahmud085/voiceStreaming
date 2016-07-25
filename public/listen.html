@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Listen Message!</title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+    <div class="jumbotron">
+        <p id="channel"></p>
+    </div>
+    <script type="text/javascript">
+    	    var socket = io();
+            socket.emit('room', prompt("What are u going to listen?"));
+            socket.on('join',function(room){
+                $('#channel').text("You are listening from channel '"+room+"'!");
+            });
+            socket.on('voice', function(arrayBuffer) {
+                var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
+                console.log("here in play",blob);
+                var audio = document.createElement('audio');
+                audio.src = window.URL.createObjectURL(blob);
+                audio.play();
+            });  
+
+
+    </script>
+</body>
+</html>
