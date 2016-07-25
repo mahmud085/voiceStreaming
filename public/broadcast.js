@@ -1,8 +1,12 @@
 var mediaRecorder;
 var socket = io();
 $('#start').click(function(){
-	var constraints = { audio: true };
-	navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
+		navigator.mediaDevices.getUserMedia = (navigator.getUserMedia ||
+     											navigator.webkitGetUserMedia ||
+      											navigator.mozGetUserMedia|| 
+      											navigator.msGetUserMedia);
+		var constraints = { audio: true };
+		navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
 	    mediaRecorder = new MediaRecorder(mediaStream);
 	    mediaRecorder.onstart = function(e) {
 	        this.chunks = [];
