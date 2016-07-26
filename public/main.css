@@ -7,7 +7,10 @@ body {
   }
 .jumbotron{
 	background-color: #121254;
+  border-radius: 120px;
   color: white;
-	margin:200px 300px 200px 300px;
-	padding:70px 50px 70px 160px;
+  min-height: 350px;
+  max-height: 500px;
+	margin:20px;
+	padding:70px;
 }

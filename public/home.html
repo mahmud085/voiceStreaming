@@ -6,12 +6,84 @@
     <script src="//cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
- 	<link rel="stylesheet" type="text/css" href="main.css">
+    <link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
-	<div class="jumbotron">
-		<a href="broadcast.html" class="btn btn-primary btn-lg" target="_blank">Broadcast Audio</a>
-		<a href="listen.html" class="btn btn-primary btn-lg" target="_blank">Listen Audio</a>
+	<div class="container">
+		<div class="row">
+			<div class="jumbotron col-sm-2 col-lg-2 col-md-1">
+				<div id="rooms"></div>
+			</div>
+			<div class="jumbotron col-sm-5 col-lg-5 col-md-3">
+				<div id="conversation"></div>
+			</div>
+			<div class="jumbotron col-sm-3 col-lg-3 col-md-2">
+				<a href="#" class="btn btn-primary" style="display: block; width: 100%;" onclick="addRoom()">Create a channel</a>
+				<a href="broadcast.html" class="btn btn-primary" style="display: block; width: 100%;" target="_blank">Broadcast Audio</a>
+				<a href="#" class="btn btn-primary" style="display: block; width: 100%;" id="lis">Start Listen</a>
+			</div>
+		</div>		
 	</div>
+	<script type="text/javascript">
+			var socket = io();
+			var cr;
+			var roomname ;
+			socket.on('connect', function(){
+		    // call the server-side function 'adduser' and send one parameter (value of prompt)
+		    	socket.emit('adduser', prompt("What's your name?"));
+		    });
+
+			// listener, whenever the server emits 'updatechat', this updates the chat body
+	     	socket.on('updatechat', function (username, data,room) {
+	      		$('#conversation').append('<b>'+username + ':</b> ' + data + ' ' +room +'<br>');
+	      		roomname = room;
+	     	});
+	     	socket.on('updaterooms',function(rooms,current_room){
+		     	$('#rooms').empty();
+			    $.each(rooms, function(key, value) {
+				    if(value == current_room){
+				    	$('#rooms').append('<div><a href="#" class="btn btn-success" style="display: block; width: 100%;">' + value + '</a></div>');
+				    }
+				    else {
+				    	$('#rooms').append('<div><a href="#" class="btn btn-primary" style="display: block; width: 100%;" onclick="switchRoom(\''+value+'\')">' + value + '</a></div>');
+				    }
+				});
+				socket.emit('current_room',current_room);
+	     	});
+		function switchRoom(room){
+      		socket.emit('switchRoom', room);
+      	}
+      	function addRoom(){
+      		var r = prompt("Enter the channel name");
+      		socket.emit('addRoom',r);
+      		socket.emit('switchRoom', r);
+      	}
+
+      	$('#lis').click(function(){
+      		click();
+      		socket.on('voice', function(arrayBuffer) {
+                var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
+                console.log("here in play",blob);
+                var audio = document.createElement('audio');
+                audio.src = window.URL.createObjectURL(blob);
+                audio.play();
+            }); 
+      		
+      	});
+      	function click(){
+      		$('#lis').text("its listening from "+cr);
+      		socket.on('current_room',function(current_room){
+				socket.room = current_room;
+				cr = current_room;
+				$('#lis').text("its listening from "+cr);
+			});
+      	}
+      	$(function(){
+      		socket.on('current_room',function(current_room){
+				socket.room = current_room;
+				cr = current_room;
+			});
+      	});
+	</script>
 </body>
 </html>
