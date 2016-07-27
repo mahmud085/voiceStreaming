@@ -14,7 +14,7 @@ app.get('/',function(req,res){
 	res.redirect('home.html');
 });
 var usernames = {};
-var rooms = ['public','room1','room2'];
+var rooms = ['public','private','general'];
 var cr = {};
 io.on('connection',function(socket){
 	socket.on('adduser',function(username){
@@ -22,7 +22,6 @@ io.on('connection',function(socket){
 		socket.username = username;
 		// store the room name in the socket session for this client
 		socket.room = 'public';
-		cr.name = socket.room;
 		// add the client's username to the global list
 		usernames[username] = username;
 		// send client to room 1
@@ -32,7 +31,6 @@ io.on('connection',function(socket){
 		// echo to room 1 that a person has connected to their room
 		io.sockets.in('public').emit('updatechat', 'SERVER', username + ' has joined this channel',socket.room);
 		socket.emit('updaterooms', rooms, 'public');
-		socket.emit('current_room',socket.room);
 	});
 	socket.on('switchRoom', function(newroom){
 		// sent message to OLD room
@@ -46,19 +44,14 @@ io.on('connection',function(socket){
 		console.log("socket 3",socket.room);
 		io.sockets.in(newroom).emit('updatechat', 'SERVER', socket.username+' has joined this channel',socket.room);
 		socket.emit('updaterooms', rooms, newroom);
-		socket.emit('current_room',socket.room);
 	});
 	socket.on('addRoom',function(room){
 		rooms.push(room);
 	});
-	socket.on('roomname',function(a){
-		console.log("socket 2",cr.name);
-		socket.emit('room',cr.name);
-	});
-	socket.on('voice',function(blob){
-		console.log("socket ",cr.name);
+	socket.on('voice',function(blob,room){
+		console.log("socket ",room);
 		//socket.broadcast.emit('voice',blob);
-		io.sockets.in(cr.name).emit('voice',blob);
+		io.sockets.in(room).emit('voice',blob);
 	});
 });
 

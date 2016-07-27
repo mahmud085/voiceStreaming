@@ -11,23 +11,23 @@
 <body>
 	<div class="container">
 		<div class="row">
-			<div class="jumbotron col-sm-2 col-lg-2 col-md-1">
+			<div class="jumbotron col-sm-3 col-lg-3 col-md-3">
 				<div id="rooms"></div>
 			</div>
-			<div class="jumbotron col-sm-5 col-lg-5 col-md-3">
-				<div id="conversation"></div>
+			<div class="jumbotron col-sm-5 col-lg-5 col-md-5">
+				<div id="conversation" style="overflow-y:auto; height:400px;"></div>
 			</div>
-			<div class="jumbotron col-sm-3 col-lg-3 col-md-2">
+			<div class="jumbotron col-sm-3 col-lg-3 col-md-3">
 				<a href="#" class="btn btn-primary" style="display: block; width: 100%;" onclick="addRoom()">Create a channel</a>
-				<a href="broadcast.html" class="btn btn-primary" style="display: block; width: 100%;" target="_blank">Broadcast Audio</a>
-				<a href="#" class="btn btn-primary" style="display: block; width: 100%;" id="lis">Start Listen</a>
+				<a class="btn btn-primary" style="display: block; width: 100%;" id="start">Start Recording</a>
+				<a class="btn btn-primary" style="display: block; width: 100%;" id="stop">Stop Recording and Send</a>
+				<a class="btn btn-primary" style="display: block; width: 100%;" id="lis">Start Listen</a>
 			</div>
 		</div>		
 	</div>
 	<script type="text/javascript">
 			var socket = io();
-			var cr;
-			var roomname ;
+
 			socket.on('connect', function(){
 		    // call the server-side function 'adduser' and send one parameter (value of prompt)
 		    	socket.emit('adduser', prompt("What's your name?"));
@@ -35,10 +35,11 @@
 
 			// listener, whenever the server emits 'updatechat', this updates the chat body
 	     	socket.on('updatechat', function (username, data,room) {
+	     		socket.room = room;
 	      		$('#conversation').append('<b>'+username + ':</b> ' + data + ' ' +room +'<br>');
-	      		roomname = room;
 	     	});
 	     	socket.on('updaterooms',function(rooms,current_room){
+	     		socket.room = current_room;
 		     	$('#rooms').empty();
 			    $.each(rooms, function(key, value) {
 				    if(value == current_room){
@@ -48,8 +49,35 @@
 				    	$('#rooms').append('<div><a href="#" class="btn btn-primary" style="display: block; width: 100%;" onclick="switchRoom(\''+value+'\')">' + value + '</a></div>');
 				    }
 				});
-				socket.emit('current_room',current_room);
 	     	});
+	     $('#start').click(function(){
+			$('#start').hide();
+			$('#stop').show();
+			var constraints = { audio: true };
+			navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
+		    mediaRecorder = new MediaRecorder(mediaStream);
+		    mediaRecorder.onstart = function(e) {
+		        this.chunks = [];
+		    };
+		    mediaRecorder.ondataavailable = function(e) {
+		        this.chunks.push(e.data);
+		    };
+		    mediaRecorder.onstop = function(e) {
+		        var blob = new Blob(this.chunks, { 'type' : 'audio/ogg; codecs=opus' });
+		        console.log("socket room : ",socket.room);
+		        socket.emit('voice', blob,socket.room);
+		    };
+
+		    // Start recording
+		    mediaRecorder.start();
+
+			});
+		});
+		$('#stop').click(function(){
+			$('#start').show();
+			$('#stop').hide();
+			mediaRecorder.stop();
+		});
 		function switchRoom(room){
       		socket.emit('switchRoom', room);
       	}
@@ -60,7 +88,7 @@
       	}
 
       	$('#lis').click(function(){
-      		click();
+      		$('#lis').text("its listening");
       		socket.on('voice', function(arrayBuffer) {
                 var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
                 console.log("here in play",blob);
@@ -70,19 +98,8 @@
             }); 
       		
       	});
-      	function click(){
-      		$('#lis').text("its listening from "+cr);
-      		socket.on('current_room',function(current_room){
-				socket.room = current_room;
-				cr = current_room;
-				$('#lis').text("its listening from "+cr);
-			});
-      	}
       	$(function(){
-      		socket.on('current_room',function(current_room){
-				socket.room = current_room;
-				cr = current_room;
-			});
+      		$('#stop').hide();
       	});
 	</script>
 </body>

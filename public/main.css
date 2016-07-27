@@ -9,8 +9,11 @@ body {
 	background-color: #121254;
   border-radius: 120px;
   color: white;
-  min-height: 350px;
-  max-height: 500px;
-	margin:20px;
-	padding:70px;
+  min-height: 450px;
+  max-height: 450px;
+	margin:10px;
+	padding-left:5px;
+}
+.jumbotron a{
+  margin: 10px; 
 }
